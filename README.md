@@ -1,5 +1,7 @@
 ### Purpose
-Parse PDF file of HSBC credit card bill and append [AndroMoney](https://web.andromoney.com) CSV  file.
+Parse following credit card bills and append parsed data to [AndroMoney](https://web.andromoney.com) CSV  file:
+1. HSBC PDF file;
+1. Cathay United Bank CSV file.
 ### Inputs
 User puts PDF file and to-be-appended CSV file in the directory `../inputs/`.
 ### Outputs
