@@ -1,11 +1,12 @@
-import csv
+import csv, tkinter
 import pandas as pd
-from os import makedirs 
+from os import makedirs, path
 from tabula import read_pdf
 from dateutil.relativedelta import relativedelta
 from datetime import date
 from shutil import copyfile
 from getpass import getpass
+from tkinter import filedialog
 
 # Get the fieldnames of csv file.
 with open(
@@ -57,11 +58,29 @@ with open('./outputs/all.csv', mode='w', encoding='utf_16', newline='') as f:
             'Sub-Category': levels_all[1][codes_all[1][i]]})
 
 # Preprocess bill file.
-password = getpass('Password: ')
-df_hsbc = read_pdf(
-    '../inputs/eStatement_201906.pdf', password=password, pages=2)
-df_hsbc = df_hsbc.iloc[4:,-1]
-
+root = tkinter.Tk()
+root.withdraw()
+input_path = filedialog.askopenfilename(initialdir ='../inputs/')
+if not input_path: raise FileNotFoundError('Not selected file.')
+pdf_basename = path.basename(input_path)
+# Bill of HSBC Bank.
+if 'eStatement_' in pdf_basename:
+    password = getpass('Password: ')
+    param = [2, 4, -1] # [pages, index_head, column]
+    df_bill = read_pdf(input_path, password=password, pages=param[0])
+    df_bill = df_bill.iloc[param[1]:,param[2]]
+# Bill of Cathay United Bank.
+elif 'Download' in pdf_basename:
+    header = 14 # For future modification.
+    df_bill = pd.read_csv(input_path, encoding='cp950', header=header)
+    # Abstract transcations by checking existence of card digits.
+    boolean = pd.notna(pd.to_numeric(df_bill['卡號末四碼'], errors='coerce'))
+    
+    df_bill = df_bill[boolean]
+    df_bill = df_bill['臺幣金額']
+else:
+    FileNotFoundError('Selected file is not supported bill.')
+    
 copyfile('../inputs/AndroMoney.csv', './outputs/AndroMoney.csv')
 # Ouput appended csv file.
 with open(
@@ -70,7 +89,7 @@ with open(
     writer = csv.DictWriter(
         f, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
     date = input('Paid date (yyyymmdd): ')
-    for amount in df_hsbc:
+    for amount in df_bill:
         print('NT$:', amount, end='')
         code = int(input('; code: '))
         if code is -1:
@@ -78,7 +97,7 @@ with open(
         elif 0 <= code < frequent_max:
             codes = codes_frequent
             levels = levels_frequent
-        elif frequent_max <= code < len(codes_all[0]):
+        elif frequent_max <= code < len(codes_all[0])+frequent_max:
             codes = codes_all
             levels = levels_all
             code -= frequent_max # codes_all and levels_all start from index 0.
