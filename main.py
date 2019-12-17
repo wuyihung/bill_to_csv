@@ -28,10 +28,11 @@ from dateutil import relativedelta
 from tkinter import filedialog
 
 
-def read_file(initialdir):
+def read_file(title, initialdir):
     root = tkinter.Tk()
     root.withdraw()
-    input_file = tkinter.filedialog.askopenfilename(initialdir=initialdir)
+    input_file = tkinter.filedialog.askopenfilename(title=title,
+                                                    initialdir=initialdir)
     if not input_file:
         raise FileNotFoundError('Not selected file.')
     else:
@@ -57,12 +58,12 @@ class AndroMoney(object):
         self._init_all_categories()
 
     def _init_file(self):
-        file = read_file('input')
+        file = read_file(title='Select AndroMoney file to be appended',
+                         initialdir='input')
         if 'AndroMoney' in file:
             self._file = file
         else:
-            raise FileNotFoundError(
-                'Selected file is not AndroMoney file.')
+            raise FileNotFoundError('Selected file is not AndroMoney file.')
 
     def _init_fieldnames(self):
         """Gets fieldnames.
@@ -253,7 +254,7 @@ def read_cathay(file):
 def read_transactions():
     """Returns transactions of credit card bill.
     """
-    file = read_file('input')
+    file = read_file(title='Select credit card bill', initialdir='input')
 
     # True if file is from HSBC Bank.
     if 'eStatement_' in file:
