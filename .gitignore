@@ -1,2 +1,9 @@
-outputs/
-.vscode/
+.vscode
+__pycache__
+inputs
+outputs
+
+test/.env
+
+*.csv
+*.pdf

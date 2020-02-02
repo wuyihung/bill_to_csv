@@ -6,8 +6,13 @@ AndroMoney CSV file:
     2. Cathay United Bank CSV file.
 
 MIT License
-
 Copyright (c) 2019 WU, YI-HUNG
+
+Third party copyrights:
+    AndroMoney CSV file: Copyright (c) 2016 AndroMoney.
+    HSBC PDF file: (c) Copyright. HSBC Bank (Taiwan) Company 
+        Limited 2019.
+    Cathay United Bank CSV file: (c) Cathay United Bank All rights reserved.
 """
 
 from __future__ import absolute_import
@@ -59,7 +64,7 @@ class AndroMoney(object):
 
     def _init_file(self):
         file = read_file(title='Select AndroMoney file to be appended',
-                         initialdir='input')
+                         initialdir='inputs')
         if 'AndroMoney' in file:
             self._file = file
         else:
@@ -92,10 +97,16 @@ class AndroMoney(object):
         date_divide = (datetime.date.today() +
                        six_months_ago).strftime('%Y%m%d')
         expenses_divide = expenses[expenses['Date'] > int(date_divide)]
-        s = expenses_divide.groupby(['Category', 'Sub-Category']).size()
+        s = expenses_divide.groupby(by=['Category', 'Sub-Category']).size()
         s = s.sort_values(ascending=False)
         self._codes_frequent = s.index.codes
         self._levels_frequent = s.index.levels
+
+    def _make_dir(self, output_file):
+        norm_path = os.path.normpath(output_file)
+        split_path = norm_path.split(os.sep)
+        output_directory = os.path.join(*split_path[:-1])
+        os.makedirs(output_directory, exist_ok=True)
 
     def output_frequently_used_categories(self, output_file):
         """Outputs CSV file of frequently used categories.
@@ -110,10 +121,7 @@ class AndroMoney(object):
         levels_frequent = self._levels_frequent
         num_freq_categories = self._num_freq_categories
 
-        norm_path = os.path.normpath(output_file)
-        split_path = norm_path.split(os.sep)
-        output_directory = os.path.join(*split_path[:-1])
-        os.makedirs(output_directory, exist_ok=True)
+        self._make_dir(output_file)
         with open(output_file, mode='w', encoding='utf_16', newline='') as f:
             writer = csv.DictWriter(
                 f,
@@ -141,7 +149,7 @@ class AndroMoney(object):
         one_year_ago = relativedelta.relativedelta(years=-1)
         date_divide = (datetime.date.today() + one_year_ago).strftime('%Y%m%d')
         expenses_divide = expenses[expenses['Date'] > int(date_divide)]
-        s = expenses_divide.groupby(['Category', 'Sub-Category']).size()
+        s = expenses_divide.groupby(by=['Category', 'Sub-Category']).size()
         self._codes_all = s.index.codes
         self._levels_all = s.index.levels
 
@@ -156,6 +164,7 @@ class AndroMoney(object):
         codes_all = self._codes_all
         levels_all = self._levels_all
 
+        self._make_dir(output_file)
         with open(output_file, mode='w', encoding='utf_16', newline='') as f:
             writer = csv.DictWriter(
                 f,
@@ -163,7 +172,7 @@ class AndroMoney(object):
                 delimiter='\t')
             for i in range(len(codes_all[0])):
                 writer.writerow({
-                    'Code': 101 + i,
+                    'Code': self._boundary_index + 1 + i,
                     'Category': levels_all[0][codes_all[0][i]],
                     'Sub-Category': levels_all[1][codes_all[1][i]]
                 })
@@ -194,23 +203,26 @@ class AndroMoney(object):
             codes_frequent = self._codes_frequent
             levels_all = self._levels_all
             levels_frequent = self._levels_frequent
-            num_freq_categories = self._num_freq_categories
 
+            print('Enter category codes of following transactions.')
+            print('Enter 0 to skip a transactions.')
             for amount in transactions:
                 print('NT$:', amount, end='')
                 code = int(input('; code: '))
-                if code is -1:
+                if code is 0:
                     continue
-                elif 0 <= code < boundary_index:
+                elif 0 < code < boundary_index + 1:
+                    code -= 1
                     codes = codes_frequent
                     levels = levels_frequent
-                elif boundary_index <= code < len(
-                        codes_all[0]) + num_freq_categories:
+                elif boundary_index < code < len(
+                        codes_all[0]) + boundary_index + 1:
+                    code -= boundary_index + 1
                     codes = codes_all
                     levels = levels_all
-                    code -= num_freq_categories
                 else:
                     raise ValueError('varialbe \'code\' has wrong value.')
+
                 writer.writerow({
                     'Currency': 'TWD',
                     'Amount': float(amount.replace(',', '')),
@@ -248,13 +260,14 @@ def read_cathay(file):
 
     df_bill = df_bill[boolean]
     df_bill = df_bill['臺幣金額']
+    df_bill = df_bill.str.strip()
     return df_bill
 
 
 def read_transactions():
     """Returns transactions of credit card bill.
     """
-    file = read_file(title='Select credit card bill', initialdir='input')
+    file = read_file(title='Select credit card bill', initialdir='inputs')
 
     # True if file is from HSBC Bank.
     if 'eStatement_' in file:
