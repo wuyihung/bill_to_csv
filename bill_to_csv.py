@@ -130,6 +130,13 @@ class AndroMoney(object):
             num_codes = (num_freq_categories
                          if len(codes_frequent[0]) > num_freq_categories else
                          len(codes_frequent[0]))
+
+            writer.writerow({
+                'Code': 0,
+                'Category': '其他',
+                'Sub-Category': '待分類'
+            })
+
             for i in range(num_codes):
                 writer.writerow({
                     'Code':
@@ -210,14 +217,22 @@ class AndroMoney(object):
                 print('NT$:', amount, end='')
                 code = int(input('; code: '))
                 if code is 0:
+                    writer.writerow({
+                        'Currency': 'TWD',
+                        'Amount': float(amount.replace(',', '')),
+                        'Date': date,
+                        'Expense(Transfer Out)': 'Winston第一銀行臺幣',
+                        'Category': '其他',
+                        'Sub-Category': '待分類'
+                    })
                     continue
                 elif 0 < code < boundary_index + 1:
-                    code -= 1
+                    index = code - 1
                     codes = codes_frequent
                     levels = levels_frequent
                 elif boundary_index < code < len(
                         codes_all[0]) + boundary_index + 1:
-                    code -= boundary_index + 1
+                    index = code - (boundary_index + 1)
                     codes = codes_all
                     levels = levels_all
                 else:
@@ -228,8 +243,8 @@ class AndroMoney(object):
                     'Amount': float(amount.replace(',', '')),
                     'Date': date,
                     'Expense(Transfer Out)': 'Winston第一銀行臺幣',
-                    'Category': levels[0][codes[0][code]],
-                    'Sub-Category': levels[1][codes[1][code]]
+                    'Category': levels[0][codes[0][index]],
+                    'Sub-Category': levels[1][codes[1][index]]
                 })
 
 

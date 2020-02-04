@@ -237,7 +237,7 @@ class TestReadAppend(unittest.TestCase):
         """
         num_freq_categories = self._andro_money._num_freq_categories
         boundary_index = self._andro_money._boundary_index
-        input_codes = list(range(1, num_freq_categories + 1)) + list(
+        input_codes = [0] + list(range(1, num_freq_categories + 1)) + list(
             range(boundary_index + 1,
                   boundary_index + 1 + len(self._andro_money._codes_all[0])))
 
