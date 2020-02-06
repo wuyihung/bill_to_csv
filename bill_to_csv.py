@@ -75,17 +75,27 @@ class AndroMoney(object):
         """
         with open(self._file, mode='r', encoding='cp950', newline='') as f:
             reader = csv.reader(f)
-            self._fieldnames = [
+            self._all_fieldnames = [
                 row for idx, row in enumerate(reader) if idx == 1
             ][0]
+
+        self._fieldnames = {
+            'currency': self._all_fieldnames[1],
+            'amount': self._all_fieldnames[2],
+            'category': self._all_fieldnames[3],
+            'sub_category': self._all_fieldnames[4],
+            'date': self._all_fieldnames[5],
+            'outflow': self._all_fieldnames[6],
+            'inflow': self._all_fieldnames[7]
+        }
 
     def _init_expenses(self):
         """Gets expenses and sorts them by date.
         """
         df = pd.read_csv(self._file, encoding='cp950', header=1)
-        df = df[pd.notnull(df['Expense(Transfer Out)'])]
-        df = df[pd.isnull(df['Income(Transfer In)'])]
-        self._expenses = df.sort_values(by='Date')
+        df = df[pd.notnull(df[self._fieldnames['outflow']])]
+        df = df[pd.isnull(df[self._fieldnames['inflow']])]
+        self._expenses = df.sort_values(by=self._fieldnames['date'])
 
     def _init_frequently_used_categories(self):
         """Initializes frequently used categories.
@@ -96,8 +106,11 @@ class AndroMoney(object):
         six_months_ago = relativedelta.relativedelta(months=-6)
         date_divide = (datetime.date.today() +
                        six_months_ago).strftime('%Y%m%d')
-        expenses_divide = expenses[expenses['Date'] > int(date_divide)]
-        s = expenses_divide.groupby(by=['Category', 'Sub-Category']).size()
+        expenses_divide = expenses[
+            expenses[self._fieldnames['date']] > int(date_divide)]
+        s = expenses_divide.groupby(by=[
+            self._fieldnames['category'], self._fieldnames['sub_category']
+        ]).size()
         s = s.sort_values(ascending=False)
         self._codes_frequent = s.index.codes
         self._levels_frequent = s.index.levels
@@ -155,8 +168,11 @@ class AndroMoney(object):
         expenses = self._expenses
         one_year_ago = relativedelta.relativedelta(years=-1)
         date_divide = (datetime.date.today() + one_year_ago).strftime('%Y%m%d')
-        expenses_divide = expenses[expenses['Date'] > int(date_divide)]
-        s = expenses_divide.groupby(by=['Category', 'Sub-Category']).size()
+        expenses_divide = expenses[
+            expenses[self._fieldnames['date']] > int(date_divide)]
+        s = expenses_divide.groupby(by=[
+            self._fieldnames['category'], self._fieldnames['sub_category']
+        ]).size()
         self._codes_all = s.index.codes
         self._levels_all = s.index.levels
 
@@ -201,7 +217,7 @@ class AndroMoney(object):
         shutil.copyfile(self._file, output_file)
         with open(output_file, mode='a', encoding='cp950', newline='') as f:
             writer = csv.DictWriter(f,
-                                    fieldnames=self._fieldnames,
+                                    fieldnames=self._all_fieldnames,
                                     quoting=csv.QUOTE_ALL)
             date = input('Paid date (yyyymmdd): ')
 
@@ -218,12 +234,18 @@ class AndroMoney(object):
                 code = int(input('; code: '))
                 if code is 0:
                     writer.writerow({
-                        'Currency': 'TWD',
-                        'Amount': float(amount.replace(',', '')),
-                        'Date': date,
-                        'Expense(Transfer Out)': 'Winston第一銀行臺幣',
-                        'Category': '其他',
-                        'Sub-Category': '待分類'
+                        self._fieldnames['currency']:
+                        'TWD',
+                        self._fieldnames['amount']:
+                        float(amount.replace(',', '')),
+                        self._fieldnames['date']:
+                        date,
+                        self._fieldnames['outflow']:
+                        'Winston第一銀行臺幣',
+                        self._fieldnames['category']:
+                        '其他',
+                        self._fieldnames['sub_category']:
+                        '待分類'
                     })
                     continue
                 elif 0 < code < boundary_index + 1:
@@ -239,12 +261,18 @@ class AndroMoney(object):
                     raise ValueError('varialbe \'code\' has wrong value.')
 
                 writer.writerow({
-                    'Currency': 'TWD',
-                    'Amount': float(amount.replace(',', '')),
-                    'Date': date,
-                    'Expense(Transfer Out)': 'Winston第一銀行臺幣',
-                    'Category': levels[0][codes[0][index]],
-                    'Sub-Category': levels[1][codes[1][index]]
+                    self._fieldnames['currency']:
+                    'TWD',
+                    self._fieldnames['amount']:
+                    float(amount.replace(',', '')),
+                    self._fieldnames['date']:
+                    date,
+                    self._fieldnames['outflow']:
+                    'Winston第一銀行臺幣',
+                    self._fieldnames['category']:
+                    levels[0][codes[0][index]],
+                    self._fieldnames['sub_category']:
+                    levels[1][codes[1][index]]
                 })
 
 

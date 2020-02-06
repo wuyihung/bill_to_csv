@@ -56,13 +56,38 @@ class TestAndroMoney(unittest.TestCase):
         self._andro_money = bill_to_csv.AndroMoney(num_freq_categories=20)
 
     def test_init_fieldnames(self):
-        fieldnames_ref = [
-            'Id', 'Currency', 'Amount', 'Category', 'Sub-Category', 'Date',
-            'Expense(Transfer Out)', 'Income(Transfer In)', 'Note', 'Periodic',
-            'Project', 'Payee/Payer', 'uid', 'Time'
-        ]
+        """Tests Chinese or English fieldnames."""
         self._andro_money._init_fieldnames()
-        self.assertEqual(self._andro_money._fieldnames, fieldnames_ref)
+
+        all_fieldnames = self._andro_money._all_fieldnames
+        fieldnames = self._andro_money._fieldnames
+
+        if fieldnames['currency'] == '幣別':
+            all_fieldnames_ref = [
+                'Id', '幣別', '金額', '分類', '子分類', '日期', '付款(轉出)', '收款(轉入)', '備註',
+                'Periodic', '專案', '商家(公司)', 'uid', '時間'
+            ]
+        elif fieldnames['currency'] == 'Currency':
+            all_fieldnames_ref = [
+                'Id', 'Currency', 'Amount', 'Category', 'Sub-Category', 'Date',
+                'Expense(Transfer Out)', 'Income(Transfer In)', 'Note',
+                'Periodic', 'Project', 'Payee/Payer', 'uid', 'Time'
+            ]
+        else:
+            raise ValueError("fieldnames['currency'] has an unexpected value")
+
+        fieldnames_ref = {
+            'currency': all_fieldnames[1],
+            'amount': all_fieldnames[2],
+            'category': all_fieldnames[3],
+            'sub_category': all_fieldnames[4],
+            'date': all_fieldnames[5],
+            'outflow': all_fieldnames[6],
+            'inflow': all_fieldnames[7]
+        }
+
+        self.assertListEqual(all_fieldnames, all_fieldnames_ref)
+        self.assertDictEqual(fieldnames, fieldnames_ref)
 
     def test_init_expenses(self):
         expenses = self._andro_money._expenses
@@ -102,8 +127,8 @@ class TestAndroMoney(unittest.TestCase):
             ]
         ]
 
-        self.assertEqual(codes_frequent, codes_frequent_ref)
-        self.assertEqual(levels_frequent, levels_frequent_ref)
+        self.assertListEqual(codes_frequent, codes_frequent_ref)
+        self.assertListEqual(levels_frequent, levels_frequent_ref)
 
     def test_init_all_categories(self):
         codes_all = [list(x) for x in self._andro_money._codes_all]
@@ -142,8 +167,8 @@ class TestAndroMoney(unittest.TestCase):
             ]
         ]
 
-        self.assertEqual(codes_all, codes_all_ref)
-        self.assertEqual(levels_all, levels_all_ref)
+        self.assertListEqual(codes_all, codes_all_ref)
+        self.assertListEqual(levels_all, levels_all_ref)
 
     _compare_csv_files = _compare_csv_files
 
