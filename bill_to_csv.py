@@ -283,7 +283,8 @@ def read_hsbc(file):
         file: File of HSBC credit card bill.
     """
     password = getpass.getpass('Password: ')
-    df_bill = tabula.read_pdf(file, password=password, pages=2)
+    df_bill_list = tabula.read_pdf(file, password=password, pages=2)
+    df_bill = df_bill_list[0]
 
     index = df_bill.index
     na_index = index[df_bill.iloc[:, 0].isna()]
