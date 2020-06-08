@@ -53,7 +53,7 @@ class TestAndroMoney(unittest.TestCase):
         in_dir = 'inputs'
         file_name = 'AndroMoney.csv'
         read_file.return_value = path.join(self._test_dir, in_dir, file_name)
-        self._andro_money = bill_to_csv.AndroMoney(num_freq_categories=20)
+        self._andro_money = bill_to_csv.AndroMoney(num_freq_categories=20, last_directory='')
 
     def test_init_fieldnames(self):
         """Tests Chinese or English fieldnames."""
@@ -203,7 +203,7 @@ class TestReadAppend(unittest.TestCase):
         file_name = 'AndroMoney.csv'
         read_file.return_value = path.join(self._test_dir, self._in_dir,
                                            file_name)
-        self._andro_money = bill_to_csv.AndroMoney(num_freq_categories=20)
+        self._andro_money = bill_to_csv.AndroMoney(num_freq_categories=20, last_directory='')
 
     def _get_mock_transactions(self, file_name, read_file, getpass):
         read_file.return_value = path.join(self._test_dir, self._in_dir,
@@ -212,7 +212,7 @@ class TestReadAppend(unittest.TestCase):
         dotenv.load_dotenv()
         getpass.return_value = os.environ.get('PASSWORD')
 
-        mock_transactions = bill_to_csv.read_transactions()
+        mock_transactions = bill_to_csv.read_transactions(last_directory='')
         return mock_transactions
 
     @mock.patch('bill_to_csv.getpass.getpass')

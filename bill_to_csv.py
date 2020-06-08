@@ -47,7 +47,7 @@ def read_file(title, initialdir):
 class AndroMoney(object):
     """Class to parse AndroMoney file.
     """
-    def __init__(self, num_freq_categories):
+    def __init__(self, num_freq_categories, last_directory):
         """Initializes instance object.
         
         Args:
@@ -56,19 +56,21 @@ class AndroMoney(object):
         self._boundary_index = 100
         self._num_freq_categories = num_freq_categories
 
-        self._init_file()
+        self._init_file(last_directory)
         self._init_fieldnames()
         self._init_expenses()
         self._init_frequently_used_categories()
         self._init_all_categories()
 
-    def _init_file(self):
+    def _init_file(self, last_directory):
         file = read_file(title='Select AndroMoney file to be appended',
-                         initialdir='inputs')
+                         initialdir=last_directory)
         if 'AndroMoney' in file:
             self._file = file
         else:
             raise FileNotFoundError('Selected file is not AndroMoney file.')
+
+        self.last_directory = os.path.dirname(file)
 
     def _init_fieldnames(self):
         """Gets fieldnames.
@@ -314,10 +316,10 @@ def read_cathay(file):
     return df_bill
 
 
-def read_transactions():
+def read_transactions(last_directory):
     """Returns transactions of credit card bill.
     """
-    file = read_file(title='Select credit card bill', initialdir='inputs')
+    file = read_file(title='Select credit card bill', initialdir=last_directory)
 
     # True if file is from HSBC Bank.
     if 'eStatement_' in file:
@@ -332,7 +334,9 @@ def read_transactions():
 def main():
     """The first function to execute when running this module.
     """
-    andro_money = AndroMoney(num_freq_categories=20)
+    last_directory = '~'
+
+    andro_money = AndroMoney(num_freq_categories=20, last_directory=last_directory)
 
     # Outputs codes of categories for user to refer to.
     output_dir = 'outputs'
@@ -341,7 +345,7 @@ def main():
     andro_money.output_all_categories(os.path.join(output_dir, 'all.csv'))
 
     # Reads transactions from credit card bill.
-    transactions = read_transactions()
+    transactions = read_transactions(andro_money.last_directory)
 
     # Appends transactions to newly-copied AndroMoney file.
     andro_money.append(transactions, output_dir)
