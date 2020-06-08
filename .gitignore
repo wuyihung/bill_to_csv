@@ -2,6 +2,7 @@
 __pycache__
 inputs
 outputs
+/bazel-*
 
 test/.env
 

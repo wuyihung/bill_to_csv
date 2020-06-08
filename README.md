@@ -1,8 +1,11 @@
 ## Purpose
+
 Parses specific credit card bills and appends parsed transactions to [AndroMoney](https://web.andromoney.com) CSV file. Supported bills are:
 1. HSBC Bank (Taiwan) PDF file and
 1. Cathay United Bank CSV file.
+
 ## Getting started
+
 1. Run module:
     ```
     python bill_to_csv.py
@@ -12,3 +15,9 @@ Parses specific credit card bills and appends parsed transactions to [AndroMoney
 1. Follow instructions shown on screen.
 1. When keying in codes of transactions, refer to generated files `./outputs/frequent.csv` or `./outputs/all.csv`, which are codes of most frequently used categories or codes of all categories, respectively.
 1. `./outputs/AndroMoney.csv` is then generated and can be loaded to update mobile application of AndroMoney.
+
+## Unit tests
+
+```
+bazel test //...
+```
