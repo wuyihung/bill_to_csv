@@ -23,10 +23,12 @@ import csv
 import datetime
 import getpass
 import os
+import PyPDF2
 import shutil
 import tabula
 import tkinter
 
+import numpy as np
 import pandas as pd
 
 from dateutil import relativedelta
@@ -285,15 +287,32 @@ def read_hsbc(file):
         file: File of HSBC credit card bill.
     """
     password = getpass.getpass('Password: ')
-    df_bill_list = tabula.read_pdf(file, password=password, pages=2)
-    df_bill = df_bill_list[0]
 
-    index = df_bill.index
-    na_index = index[df_bill.iloc[:, 0].isna()]
-    start_position = index.get_loc(na_index[1]) + 1
-    end_position = index.get_loc(na_index[2])
+    pdf = PyPDF2.PdfFileReader(open(file, mode='rb'))
+    pdf.decrypt(password)
+    number_of_pages = pdf.getNumPages()
 
-    s_bill = df_bill.iloc[start_position:end_position, -1]
+    start_page = 2
+    pages = str(start_page) + '-' + str(number_of_pages)
+    df_bill_tables = tabula.read_pdf(file, password=password, pages=pages)
+
+    s_bill_tables = []
+    for count, df_bill_table in enumerate(df_bill_tables):
+        len_ilocs = len(df_bill_table.index)
+        ilocs = np.arange(len_ilocs)
+        na_ilocs = ilocs[df_bill_table.iloc[:, 0].isna()]
+
+        start_iloc = na_ilocs[1] + 1 if count == 0 else 0
+
+        if na_ilocs[-1] == ilocs[-1]:
+            end_iloc = na_ilocs[2] if count == 0 else na_ilocs[0]
+        else:
+            end_iloc = len_ilocs
+
+        s_bill_table = df_bill_table.iloc[start_iloc:end_iloc, -1]
+        s_bill_tables.append(s_bill_table)
+
+    s_bill = pd.concat(s_bill_tables)
 
     return s_bill
 
@@ -319,7 +338,8 @@ def read_cathay(file):
 def read_transactions(last_directory):
     """Returns transactions of credit card bill.
     """
-    file = read_file(title='Select credit card bill', initialdir=last_directory)
+    file = read_file(title='Select credit card bill',
+                     initialdir=last_directory)
 
     # True if file is from HSBC Bank.
     if 'eStatement_' in file:
@@ -336,7 +356,8 @@ def main():
     """
     last_directory = '~'
 
-    andro_money = AndroMoney(num_freq_categories=20, last_directory=last_directory)
+    andro_money = AndroMoney(num_freq_categories=20,
+                             last_directory=last_directory)
 
     # Outputs codes of categories for user to refer to.
     output_dir = 'outputs'

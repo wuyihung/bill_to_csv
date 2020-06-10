@@ -53,7 +53,8 @@ class TestAndroMoney(unittest.TestCase):
         in_dir = 'inputs'
         file_name = 'AndroMoney.csv'
         read_file.return_value = path.join(self._test_dir, in_dir, file_name)
-        self._andro_money = bill_to_csv.AndroMoney(num_freq_categories=20, last_directory='')
+        self._andro_money = bill_to_csv.AndroMoney(num_freq_categories=20,
+                                                   last_directory='')
 
     def test_init_fieldnames(self):
         """Tests Chinese or English fieldnames."""
@@ -203,7 +204,8 @@ class TestReadAppend(unittest.TestCase):
         file_name = 'AndroMoney.csv'
         read_file.return_value = path.join(self._test_dir, self._in_dir,
                                            file_name)
-        self._andro_money = bill_to_csv.AndroMoney(num_freq_categories=20, last_directory='')
+        self._andro_money = bill_to_csv.AndroMoney(num_freq_categories=20,
+                                                   last_directory='')
 
     def _get_mock_transactions(self, file_name, read_file, getpass):
         read_file.return_value = path.join(self._test_dir, self._in_dir,
@@ -217,7 +219,7 @@ class TestReadAppend(unittest.TestCase):
 
     @mock.patch('bill_to_csv.getpass.getpass')
     @mock.patch('bill_to_csv.read_file')
-    def test_read_hsbc_transactions(self, read_file, getpass):
+    def test_read_hsbc_1_page_transactions(self, read_file, getpass):
         file_name = 'eStatement_201911.pdf'
         transactions = self._get_mock_transactions(file_name, read_file,
                                                    getpass)
@@ -228,6 +230,21 @@ class TestReadAppend(unittest.TestCase):
             '69', '670', '20,000', '300', '300', '83', '99', '321', '50', '60',
             '75', '136', '881', '370'
         ])
+
+        ndarray = transactions.to_numpy()
+        ndarray_ref = transactions_ref.to_numpy()
+        self.assertTrue(np.array_equal(ndarray, ndarray_ref))
+
+    @mock.patch('bill_to_csv.getpass.getpass')
+    @mock.patch('bill_to_csv.read_file')
+    def test_read_hsbc_2_pages_transactions(self, read_file, getpass):
+        input_file = 'eStatement_202004.pdf'
+        transactions = self._get_mock_transactions(input_file, read_file,
+                                                   getpass)
+
+        ref_filepath = path.join(self._test_dir, self._ref_dir,
+                                 'hsbc_2_pages_transactions.csv')
+        transactions_ref = pd.read_csv(ref_filepath, index_col=0, squeeze=True)
 
         ndarray = transactions.to_numpy()
         ndarray_ref = transactions_ref.to_numpy()
