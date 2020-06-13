@@ -294,18 +294,24 @@ def read_hsbc(file):
 
     start_page = 2
     pages = str(start_page) + '-' + str(number_of_pages)
-    df_bill_tables = tabula.read_pdf(file, password=password, pages=pages)
+    df_bill_tables = tabula.read_pdf(file,
+                                     password=password,
+                                     pages=pages,
+                                     pandas_options={'header': None})
 
     s_bill_tables = []
     for count, df_bill_table in enumerate(df_bill_tables):
         len_ilocs = len(df_bill_table.index)
         ilocs = np.arange(len_ilocs)
-        na_ilocs = ilocs[df_bill_table.iloc[:, 0].isna()]
+        na_column_index = 0
+        na_ilocs = ilocs[df_bill_table.iloc[:, na_column_index].isna()]
 
-        start_iloc = na_ilocs[1] + 1 if count == 0 else 0
+        na_index_before_start = 2
+        start_iloc = na_ilocs[na_index_before_start] + 1 if count == 0 else 0
 
         if na_ilocs[-1] == ilocs[-1]:
-            end_iloc = na_ilocs[2] if count == 0 else na_ilocs[0]
+            na_end_index = na_index_before_start + 1
+            end_iloc = na_ilocs[na_end_index] if count == 0 else na_ilocs[0]
         else:
             end_iloc = len_ilocs
 
